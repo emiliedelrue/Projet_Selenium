@@ -9,7 +9,7 @@ brew install python3
 # Créer un environnement virtuel
 python3 -m venv selenium_env
 
-# Activement de l'environnement
+# Activation de l'environnement
 source selenium_env/bin/activate
 
 # Installer selenium
