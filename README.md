@@ -6,13 +6,13 @@
 # installer python3
 brew install python3  
 
-# Create a virtual environment in your project directory
+# Créer un environnement virtuel
 python3 -m venv selenium_env
 
-# Activate the virtual environment
+# Activement de l'environnement
 source selenium_env/bin/activate
 
-# Now install selenium
+# Installer selenium
 pip install selenium
 `````
 
