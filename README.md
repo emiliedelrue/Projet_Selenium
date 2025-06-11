@@ -1,6 +1,8 @@
-# Read Me 
+# Projet selenium
 
-````
+## Pré requis
+
+`````
 # installer python3
 brew install python3  
 
@@ -12,4 +14,10 @@ source selenium_env/bin/activate
 
 # Now install selenium
 pip install selenium
-````
+`````
+
+## Lancement du projet
+
+`````
+python script.py
+`````
