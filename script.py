@@ -413,32 +413,45 @@ def main():
         
         if scraper.rechercheDocteur(args.specialty, args.location):
             print("Recherche effectuée !")
-
             
+            #
+            #if any([args.insurance_sector, args.consultation_type, args.price_min, args.price_max]):
+            #    print("🔧 Application des filtres...")
+            #   scraper.filtres(
+            #        insurance_sector=args.insurance_sector,
+            #        consultation_type=args.consultation_type,
+            #        price_min=args.price_min,
+            #        price_max=args.price_max
+            #    )
+            #    print("Filtres appliqués !")
+            
+            print(" Extraction des données...")
             try:
-                print("Extraction des données...")
-                doctors = scraper.doctors(args.max_results) 
-                print(f"{len(doctors)} docteurs trouvés !")
+                doctors = scraper.doctors(args.max_results)
+                print(f"{len(doctors)} docteurs extraits !")
                 
                 if doctors:
                     print("Sauvegarde CSV...")
-                    scraper.save_to_csv(args.output, doctors)  
-                    print("CSV sauvegardé !")
+                    scraper.save_to_csv(args.output, doctors)
+                    print(f"Données sauvegardées dans {args.output} !")
                 else:
                     print("Aucune donnée à sauvegarder")
                     
             except Exception as e:
-                print(f"Erreur extraction: {e}")
+                print(f"Erreur lors de l'extraction: {e}")
                 
         else:
             print("Échec de la recherche")
             
     except Exception as e:
-        print(f"Erreur générale: {e}")
+        print(f" Erreur générale: {e}")
+        import traceback
+        traceback.print_exc() 
         
-            
     finally:
+        print("🔄 Fermeture du navigateur...")
         scraper.close()
+        print("✅ Terminé !")
 
 if __name__ == "__main__":
     main()
