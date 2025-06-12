@@ -122,49 +122,56 @@ class Doctolib:
 
     def extract_availability(self, card):
         try:
-            restriction_spans = card.find_elements(By.XPATH, 
-                ".//span[contains(text(), 'patients déjà suivis') or contains(text(), 'réserve la prise de rendez-vous')]")
+            # Chercher en PRIORITÉ le bouton spécifique avec "Prochain RDV"
+            specific_rdv_button = card.find_elements(By.XPATH, 
+                ".//button[contains(@class, 'dl-button')]//span[contains(text(), 'Prochain RDV')]")
             
-            if restriction_spans:
-                print("  Réservé aux patients suivis")
-                return "Réservé aux patients déjà suivis"
+            if specific_rdv_button:
+                # Extraire le texte complet du bouton
+                button_text = specific_rdv_button[0].text.strip()
+                print(f"  Bouton RDV spécifique trouvé: {button_text}")
+                return button_text
             
-            availability_container = card.find_elements(By.CSS_SELECTOR, "[data-test-id='availabilities-container']")
+            # Alternative: chercher par la structure HTML plus précise
+            specific_button_alt = card.find_elements(By.XPATH, 
+                ".//button[@data-design-system='oxygen'][@data-design-system-component='Button']//span[@data-design-system-component='HTML'][contains(text(), 'Prochain RDV')]")
             
-            if availability_container:
-                container = availability_container[0]
-                
-                all_spans = container.find_elements(By.TAG_NAME, "span")
-                
-                for span in all_spans:
-                    text = span.text.strip().lower()
+            if specific_button_alt:
+                button_text = specific_button_alt[0].text.strip()
+                print(f"  Bouton RDV spécifique (alt) trouvé: {button_text}")
+                return button_text
+            
+            # Si le bouton spécifique n'est pas présent, chercher le message "Aucune disponibilité en ligne"
+            no_availability_span = card.find_elements(By.XPATH, 
+                ".//span[contains(@class, 'dl-text') and contains(text(), 'Aucune disponibilité en ligne')]")
+            
+            if no_availability_span:
+                no_availability_text = no_availability_span[0].text.strip()
+                print(f"  Aucune disponibilité: {no_availability_text}")
+                return no_availability_text
+            
+            # Chercher d'autres boutons de RDV génériques (en dernier recours)
+            general_rdv_button = card.find_elements(By.XPATH, 
+                ".//button[contains(@class, 'dl-button')]//span[contains(text(), 'rendez-vous') or contains(text(), 'RDV')]")
+            
+            if general_rdv_button:
+                button_text = general_rdv_button[0].text.strip()
+                print(f"  Bouton RDV générique trouvé: {button_text}")
+                return button_text
+            
+            # Chercher d'autres messages de non-disponibilité
+            unavailable_spans = card.find_elements(By.XPATH, 
+                ".//span[contains(text(), 'pas de créneaux') or contains(text(), 'aucun créneau') or contains(text(), 'non disponible')]")
+            
+            if unavailable_spans:
+                unavailable_text = unavailable_spans[0].text.strip()
+                print(f"  Non disponible: {unavailable_text}")
+                return unavailable_text
+            
+            # Si aucun élément spécifique n'est trouvé
+            print("  Statut indéterminé")
+            return "Statut de disponibilité indéterminé"
                     
-                    if any(phrase in text for phrase in [
-                        'patients déjà suivis',
-                        'pas de créneaux',
-                        'aucun créneau',
-                        'non disponible'
-                    ]):
-                        print(f"  Restriction trouvée: {span.text[:50]}...")
-                        return "Non disponible - " + span.text.strip()
-                    
-                    if any(phrase in text for phrase in [
-                        'prochain rdv',
-                        'disponible',
-                        'septembre', 'octobre', 'novembre', 'décembre'
-                    ]):
-                        print(f"  Disponibilité trouvée: {span.text}")
-                        return span.text.strip()
-            
-            rdv_buttons = card.find_elements(By.XPATH, ".//button[contains(text(), 'Prendre rendez-vous')]")
-            
-            if rdv_buttons:
-                print("  Bouton RDV présent")
-                return "Créneaux à vérifier - Clic requis"
-            else:
-                print("  Aucun bouton RDV")
-                return "Pas de prise de RDV en ligne"
-                
         except Exception as e:
             print(f"  Erreur extraction dispo: {e}")
             return "Erreur lors de la vérification"
@@ -259,9 +266,8 @@ class Doctolib:
                     except:
                         print(f"  Consultation sur place uniquement")
                     
-                    # === SECTEUR D'ASSURANCE ET PRIX ===
+                    # === SECTEUR D'ASSURANCE ===
                     secteur_assurance = "Non trouvé"
-                    prix_consultation = "Non disponible"
                     try:
                         all_text_elements = card.find_elements(By.CSS_SELECTOR, "p, span, div")
                         
@@ -277,22 +283,8 @@ class Doctolib:
                             elif "conventionné" in text and "secteur" not in text:
                                 secteur_assurance = "Conventionné (Secteur 1)"
                             
-                            import re
-                            prix_patterns = [
-                                r'(\d+)\s*€',
-                                r'(\d+)\s*euros?',
-                                r'tarif[:\s]*(\d+)',
-                                r'consultation[:\s]*(\d+)'
-                            ]
-                            
-                            for pattern in prix_patterns:
-                                prix_match = re.search(pattern, text)
-                                if prix_match:
-                                    prix_consultation = f"{prix_match.group(1)}€"
-                                    break
                         
                         print(f"  Secteur: {secteur_assurance}")
-                        print(f"  Prix: {prix_consultation}")
                         
                     except Exception as e:
                         print(f"  Secteur/Prix non trouvés: {e}")
